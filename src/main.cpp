@@ -4,7 +4,9 @@
 #include "pet.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui-4.0/src/raygui.h"
-#include "fish.h"
+#include "items/fish.h"
+#include <raymath.h>
+#include "items/ball.h"
 
 int main()
 {
@@ -13,71 +15,163 @@ int main()
     srand(time(nullptr));
 
     Pet pet = {
-        {200, 175},
-        {0, 0},
-        IDLE,
-        0.0f,
-        Color{52, 103, 130, 255}};
+        {200, 175},               // position
+        {0, 0},                   // velocity
+        IDLE,                     // state
+        0.0f,                     // state timer
+        Color{52, 103, 130, 255}, // colour
+        100.0f,                   // hunger (100 - full, 0 - starving)
+        100.0f,                   // happiness
+        100.0f,                   // energy
+        0.0f,                     // jump offset
+        false,                    // has pounced (so it only pounces once)
+        {-100, -100}              // pounce target
+    };
+
+    Ball ball{
+        {-100, -100},                      // position
+        {0, 0},                            // velocity
+        false,                             // active
+        LoadTexture("resources/ball.png"), // texture
+        8.0f,                              // radius
+        0.0f,                              // rotation
+        false                              // carried
+    };
 
     Fish fish{
-        LoadTexture("resources/fish.png")};
-    Vector2 fishPos = {-100, -100};
-    float fishVelocity = 100;
-    bool fishFalling = false;
+
+        {-100, -100},                     // position
+        100,                              // velocity
+        false,                            // isFalling
+        LoadTexture("resources/fish.png") // texture
+    };
 
     while (!WindowShouldClose())
     {
         float deltaTime = GetFrameTime();
 
-        UpdatePet(pet, deltaTime);
+        UpdatePet(pet, deltaTime, ball);
 
-        if (fishFalling)
+        if (fish.isFalling)
         {
-            // Check collision with pet
-            float distance = sqrt(pow(fishPos.x - pet.position.x, 2) + pow(fishPos.y - pet.position.y, 2));
+            // check collision with pet
+            float distance = sqrt(pow(fish.position.x - pet.position.x, 2) + pow(fish.position.y - pet.position.y, 2));
             if (distance < 25)
             {
-                fishFalling = false;
-                fishPos = {-100, -100};
-                fishVelocity = 100;
+                fish.isFalling = false;
+                fish.position = {-100, -100};
+                fish.velocity = 100;
+
+                pet.hunger += 30;
+                pet.happiness += 10;
+
+                pet.hunger = Clamp(pet.hunger, 0.0f, 100.0f);
+                pet.happiness = Clamp(pet.happiness, 0.0f, 100.0f);
             }
 
-            // Apply gravity
-            fishVelocity += 300 * deltaTime; // Gravity pulls down
+            fish.velocity += 300 * deltaTime;
 
-            // Update position
-            fishPos.y += fishVelocity * deltaTime;
+            fish.position.y += fish.velocity * deltaTime;
 
-            // Bounce off bottom
-            if (fishPos.y > 180)
+            if (fish.position.y > 180)
             {
-                fishPos.y = 180;
-                fishVelocity = -fishVelocity * 0.5f; // Bounce with energy loss
+                fish.position.y = 180;
+                fish.velocity = -fish.velocity * 0.5f;
 
-                // Stop if velocity is too small
-                if (abs(fishVelocity) < 20)
+                if (abs(fish.velocity) < 20)
                 {
-                    fishVelocity = 0;
+                    fish.velocity = 0;
                 }
             }
         }
+
+        if (ball.active)
+        {
+            float dt = GetFrameTime();
+            ball.velocity.y += 400 * dt;
+
+            ball.position.x += ball.velocity.x * dt;
+            ball.position.y += ball.velocity.y * dt;
+
+            ball.rotation += ball.velocity.x * dt * 4.0f;
+            if (ball.rotation > 360)
+                ball.rotation -= 360;
+            if (ball.rotation < 0)
+                ball.rotation += 360;
+
+            if (ball.position.y > 180)
+            {
+                ball.position.y = 180;
+                ball.velocity.y = -ball.velocity.y * 0.5f;
+            }
+
+            ball.velocity.x *= 0.98f; // adding horizontal friction
+
+            if (fabs(ball.velocity.x) < 5 && fabs(ball.velocity.y) < 5 && ball.position.y > 170)
+            {
+                ball.active = false;
+            } // stop once slow enough
+        }
+
+        // --- DRAWING BLOCK ---
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
         DrawPet(pet);
 
-        if (fishFalling)
+        if (fish.isFalling)
         {
-            DrawTextureEx(fish.texture, fishPos, 0.0f, 0.2f, WHITE);
+            DrawTextureEx(fish.texture, fish.position, 0.0f, 0.2f, WHITE);
         };
 
         if (GuiButton({10, 10, 80, 30}, "Feed"))
         {
-            fishPos = {pet.position.x, 0};
-            fishVelocity = 100;
-            fishFalling = true;
+            fish.position = {pet.position.x, 0};
+            fish.velocity = 100;
+            fish.isFalling = true;
         }
+        if (GuiButton({10, 50, 80, 30}, "Play"))
+        {
+            Vector2 target = pet.position;
+            ball.position = {50, 70};
+
+            ball.active = true;
+
+            Vector2 direction = Vector2Normalize(Vector2Subtract(target, ball.position));
+
+            ball.velocity.x = direction.x * 280;
+            ball.velocity.y = -220;
+
+            if (pet.energy > 10)
+            {
+                pet.state = PLAYING;
+                pet.happiness += 15;
+                pet.energy -= 10;
+            }
+        }
+
+        if (ball.active)
+        {
+            float scale = 0.05f;
+
+            Rectangle src = {0, 0, (float)ball.texture.width, (float)ball.texture.height};
+            Rectangle dst = {
+                ball.position.x,
+                ball.position.y,
+                ball.texture.width * scale,
+                ball.texture.height * scale};
+            Vector2 origin = {dst.width / 2, dst.height / 2};
+
+            DrawTexturePro(ball.texture, src, dst, origin, ball.rotation, WHITE);
+        }
+
+        float hungerValue = pet.hunger / 100.0f;
+        float happinessValue = pet.happiness / 100.0f;
+        float energyValue = pet.energy / 100.0f;
+        GuiProgressBar({250, 10, 80, 15}, "Hunger", NULL, &hungerValue, 0.0f, 1.0f);
+        GuiProgressBar({250, 30, 80, 15}, "Happiness", NULL, &happinessValue, 0.0f, 1.0f);
+        GuiProgressBar({250, 50, 80, 15}, "Energy", NULL, &energyValue, 0.0f, 1.0f);
 
         EndDrawing();
     }
