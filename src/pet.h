@@ -16,7 +16,10 @@ struct Pet
     PetState state;
     float stateTimer;
     Color color;
+    float hunger;
+    float happiness;
+    float energy;
 };
 
-void UpdatePet(Pet& pet, float deltaTime);
-void DrawPet(const Pet& pet);
+void UpdatePet(Pet &pet, float deltaTime);
+void DrawPet(const Pet &pet);

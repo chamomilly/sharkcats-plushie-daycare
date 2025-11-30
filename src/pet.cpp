@@ -1,64 +1,62 @@
 #include "pet.h"
 #include <cstdlib>
 
-void UpdatePet(Pet& pet, float deltaTime)
+void UpdatePet(Pet &pet, float deltaTime)
 {
     pet.stateTimer += deltaTime;
-    
-    // State transitions every 2-5 seconds
-    if (pet.stateTimer > (2.0f + (rand() % 3)))
+
+    if (pet.stateTimer > (5.0f + (rand() % 3)))
     {
         pet.state = (PetState)(rand() % 4);
         pet.stateTimer = 0.0f;
-        
+
         if (pet.state == WALKING)
         {
-            pet.velocity.x = (rand() % 3 - 1) * 50; // -50, 0, or 50
-            pet.velocity.y = (rand() % 3 - 1) * 30;
+            pet.velocity.x = (rand() % 3 - 1) * 50;
+            pet.velocity.y = 0;
         }
         else
         {
             pet.velocity = {0, 0};
         }
     }
-    
+
     // Update position
     if (pet.state == WALKING)
     {
         pet.position.x += pet.velocity.x * deltaTime;
-        pet.position.y += pet.velocity.y * deltaTime;
-        
+
         // Keep on screen
-        if (pet.position.x < 20) pet.position.x = 20;
-        if (pet.position.x > 380) pet.position.x = 380;
-        if (pet.position.y < 20) pet.position.y = 20;
-        if (pet.position.y > 280) pet.position.y = 280;
+        if (pet.position.x < 20)
+            pet.position.x = 20;
+        if (pet.position.x > 350)
+            pet.position.x = 350;
     }
 }
 
-void DrawPet(const Pet& pet)
+void DrawPet(const Pet &pet)
 {
     // Draw pet based on state
     switch (pet.state)
     {
-        case IDLE:
-            DrawCircle(pet.position.x, pet.position.y, 20, pet.color);
-            DrawText("zzz", pet.position.x - 10, pet.position.y - 40, 16, GRAY);
-            break;
-        case WALKING:
-            DrawCircle(pet.position.x, pet.position.y, 20, pet.color);
-            DrawText("!", pet.position.x - 5, pet.position.y - 35, 20, BLACK);
-            break;
-        case SLEEPING:
-            DrawEllipse(pet.position.x, pet.position.y, 25, 15, pet.color);
-            DrawText("ZZZ", pet.position.x - 15, pet.position.y - 30, 12, DARKGRAY);
-            break;
-        case PLAYING:
-            DrawCircle(pet.position.x, pet.position.y, 20, pet.color);
-            DrawText("♪", pet.position.x - 8, pet.position.y - 35, 20, GREEN);
-            break;
+    case IDLE:
+        DrawCircle(pet.position.x, pet.position.y, 20, pet.color);
+        DrawText("zzz", pet.position.x - 10, pet.position.y - 40, 16, GRAY);
+        break;
+    case WALKING:
+        DrawCircle(pet.position.x, pet.position.y, 20, pet.color);
+        DrawText("!", pet.position.x - 5, pet.position.y - 35, 20, BLACK);
+        break;
+    case SLEEPING:
+        DrawEllipse(pet.position.x, pet.position.y, 25, 15, pet.color);
+        DrawText("ZZZ", pet.position.x - 15, pet.position.y - 30, 12, DARKGRAY);
+        break;
+    case PLAYING:
+        DrawCircle(pet.position.x, pet.position.y, 20, pet.color);
+        DrawText("♪", pet.position.x - 8, pet.position.y - 35, 20, GREEN);
+        break;
     }
-    
+
     // Draw eyes
     if (pet.state != SLEEPING)
     {

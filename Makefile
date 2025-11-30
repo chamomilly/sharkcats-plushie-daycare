@@ -9,43 +9,43 @@ ifndef verbose
 endif
 
 ifeq ($(config),debug_x64)
-  raylib_demo_config = debug_x64
+  sharkcatsdaycare_config = debug_x64
   raylib_config = debug_x64
 
 else ifeq ($(config),debug_x86)
-  raylib_demo_config = debug_x86
+  sharkcatsdaycare_config = debug_x86
   raylib_config = debug_x86
 
 else ifeq ($(config),debug_arm64)
-  raylib_demo_config = debug_arm64
+  sharkcatsdaycare_config = debug_arm64
   raylib_config = debug_arm64
 
 else ifeq ($(config),release_x64)
-  raylib_demo_config = release_x64
+  sharkcatsdaycare_config = release_x64
   raylib_config = release_x64
 
 else ifeq ($(config),release_x86)
-  raylib_demo_config = release_x86
+  sharkcatsdaycare_config = release_x86
   raylib_config = release_x86
 
 else ifeq ($(config),release_arm64)
-  raylib_demo_config = release_arm64
+  sharkcatsdaycare_config = release_arm64
   raylib_config = release_arm64
 
 else
   $(error "invalid configuration $(config)")
 endif
 
-PROJECTS := raylib-demo raylib
+PROJECTS := sharkcatsdaycare raylib
 
 .PHONY: all clean help $(PROJECTS) 
 
 all: $(PROJECTS)
 
-raylib-demo: raylib
-ifneq (,$(raylib_demo_config))
-	@echo "==== Building raylib-demo ($(raylib_demo_config)) ===="
-	@${MAKE} --no-print-directory -C build/build_files -f raylib-demo.make config=$(raylib_demo_config)
+sharkcatsdaycare: raylib
+ifneq (,$(sharkcatsdaycare_config))
+	@echo "==== Building sharkcatsdaycare ($(sharkcatsdaycare_config)) ===="
+	@${MAKE} --no-print-directory -C build/build_files -f sharkcatsdaycare.make config=$(sharkcatsdaycare_config)
 endif
 
 raylib:
@@ -55,7 +55,7 @@ ifneq (,$(raylib_config))
 endif
 
 clean:
-	@${MAKE} --no-print-directory -C build/build_files -f raylib-demo.make clean
+	@${MAKE} --no-print-directory -C build/build_files -f sharkcatsdaycare.make clean
 	@${MAKE} --no-print-directory -C build/build_files -f raylib.make clean
 
 help:
@@ -72,7 +72,7 @@ help:
 	@echo "TARGETS:"
 	@echo "   all (default)"
 	@echo "   clean"
-	@echo "   raylib-demo"
+	@echo "   sharkcatsdaycare"
 	@echo "   raylib"
 	@echo ""
 	@echo "For more information, see https://github.com/premake/premake-core/wiki"
