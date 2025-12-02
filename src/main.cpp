@@ -8,6 +8,7 @@
 #include <raymath.h>
 #include "items/ball.h"
 #include <cstring>
+#include "pet_choices.h"
 
 int main()
 {
@@ -15,6 +16,14 @@ int main()
     GuiLoadStyle("resources/candy.rgs");
     SetTargetFPS(60);
     srand(time(nullptr));
+
+    PetChoice choices[4] = {
+        {"Shark Cat",
+         LoadTexture("resources/shark_cat.png")},
+        {"Andrew",
+         LoadTexture("resources/andrew.png")},
+        {"Toby", LoadTexture("resources/toby.png")},
+        {"Bruce", LoadTexture("resources/bruce.png")}};
 
     Pet pet = {
         {},                       // name (will be set below)
@@ -30,7 +39,6 @@ int main()
         false,                    // has pounced (so it only pounces once)
         {-100, -100}              // pounce target
     };
-    strcpy(pet.name, "Shark Cat");
 
     Ball ball{
         {-100, -100},                      // position
@@ -49,6 +57,63 @@ int main()
         false,                            // isFalling
         LoadTexture("resources/fish.png") // texture
     };
+
+    int selectedPetIndex = -1;
+    while (selectedPetIndex == -1 && !WindowShouldClose())
+    {
+        BeginDrawing();
+        int tileSize = 16;
+        for (int x = 0; x < 350; x += tileSize)
+        {
+            for (int y = 0; y < 200; y += tileSize)
+            {
+                Color color = ((x / tileSize + y / tileSize) % 2 == 0) ? Color{255, 240, 230, 255} : Color{240, 220, 200, 255};
+                DrawRectangle(x, y, tileSize, tileSize, color);
+            }
+        }
+
+        DrawText("Welcome to Plushie Daycare!", 35, 20, 16, Color{252, 105, 85, 255});
+        DrawText("Choose your plushie:", 35, 38, 12, Color{252, 105, 85, 255});
+
+        Rectangle buttons[4]; // to know if hovered over
+
+        for (int i = 0; i < 4; i++)
+        {
+            Rectangle buttonRect = {35 + i * 70, 80, 60, 60};
+            buttons[i] = buttonRect;
+
+            DrawRectangleRec(buttonRect, Color{254, 218, 150, 255});
+            DrawRectangleLinesEx(buttonRect, 2, Color{229, 139, 104, 255});
+
+            DrawTexturePro(choices[i].texture,
+                           {0, 0, (float)choices[i].texture.width, (float)choices[i].texture.height},
+                           {buttonRect.x, buttonRect.y, buttonRect.width, buttonRect.height},
+                           {0, 0}, 0, WHITE);
+
+            DrawText(choices[i].name, buttonRect.x, buttonRect.y + buttonRect.height + 5, 10, Color{252, 105, 85, 255});
+
+            Vector2 mouse = GetMousePosition();
+            if (CheckCollisionPointRec(mouse, buttonRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                selectedPetIndex = i;
+                strcpy(pet.name, choices[i].name);
+            }
+        }
+
+        Vector2 mouse = GetMousePosition();
+        bool overInteractive = false;
+        for (int i = 0; i < 4; i++)
+        {
+            if (CheckCollisionPointRec(mouse, buttons[i]))
+            {
+                overInteractive = true;
+                break;
+            }
+        }
+        SetMouseCursor(overInteractive ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+
+        EndDrawing();
+    }
 
     while (!WindowShouldClose())
     {
