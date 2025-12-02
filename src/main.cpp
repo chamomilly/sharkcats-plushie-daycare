@@ -7,14 +7,17 @@
 #include "items/fish.h"
 #include <raymath.h>
 #include "items/ball.h"
+#include <cstring>
 
 int main()
 {
-    InitWindow(350, 200, "Sharkcat's Plushie Daycare");
+    InitWindow(350, 200, "Plushie Daycare");
+    GuiLoadStyle("resources/candy.rgs");
     SetTargetFPS(60);
     srand(time(nullptr));
 
     Pet pet = {
+        {},                       // name (will be set below)
         {200, 175},               // position
         {0, 0},                   // velocity
         IDLE,                     // state
@@ -27,6 +30,7 @@ int main()
         false,                    // has pounced (so it only pounces once)
         {-100, -100}              // pounce target
     };
+    strcpy(pet.name, "Shark Cat");
 
     Ball ball{
         {-100, -100},                      // position
@@ -113,10 +117,39 @@ int main()
             } // stop once slow enough
         }
 
+        // Check cursor over interactive elements
+        Vector2 mouse = GetMousePosition();
+        bool overInteractive = false;
+
+        // Check if over buttons
+        if (CheckCollisionPointRec(mouse, {10, 30, 60, 20}) ||
+            CheckCollisionPointRec(mouse, {80, 30, 60, 20}))
+        {
+            overInteractive = true;
+        }
+
+        // Check if over pet
+        if (Vector2Distance(mouse, pet.position) < 25)
+        {
+            overInteractive = true;
+        }
+
+        SetMouseCursor(overInteractive ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+
         // --- DRAWING BLOCK ---
 
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+
+        // Draw pixelated background
+        int tileSize = 16;
+        for (int x = 0; x < 350; x += tileSize)
+        {
+            for (int y = 0; y < 200; y += tileSize)
+            {
+                Color color = ((x / tileSize + y / tileSize) % 2 == 0) ? Color{255, 240, 230, 255} : Color{240, 220, 200, 255};
+                DrawRectangle(x, y, tileSize, tileSize, color);
+            }
+        }
 
         DrawPet(pet);
 
@@ -125,13 +158,18 @@ int main()
             DrawTextureEx(fish.texture, fish.position, 0.0f, 0.2f, WHITE);
         };
 
-        if (GuiButton({10, 10, 80, 30}, "Feed"))
+        DrawRectangle(10, 5, 100, 21, Color{255, 255, 255, 200});
+        DrawRectangleLines(10, 5, 100, 21, Color{180, 180, 180, 255});
+        DrawText(pet.name, 15, 10, 12, Color{229, 139, 104, 255});
+        // maybe put icons here??
+
+        if (GuiButton({10, 30, 60, 20}, "Feed"))
         {
             fish.position = {pet.position.x, 0};
             fish.velocity = 100;
             fish.isFalling = true;
         }
-        if (GuiButton({10, 50, 80, 30}, "Play"))
+        if (GuiButton({80, 30, 60, 20}, "Play"))
         {
             Vector2 target = pet.position;
             ball.position = {50, 70};
@@ -169,6 +207,8 @@ int main()
         float hungerValue = pet.hunger / 100.0f;
         float happinessValue = pet.happiness / 100.0f;
         float energyValue = pet.energy / 100.0f;
+
+        GuiGroupBox({180, 5, 160, 65}, "Stats");
         GuiProgressBar({250, 10, 80, 15}, "Hunger", NULL, &hungerValue, 0.0f, 1.0f);
         GuiProgressBar({250, 30, 80, 15}, "Happiness", NULL, &happinessValue, 0.0f, 1.0f);
         GuiProgressBar({250, 50, 80, 15}, "Energy", NULL, &energyValue, 0.0f, 1.0f);

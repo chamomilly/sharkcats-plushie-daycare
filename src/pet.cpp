@@ -20,6 +20,26 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball)
     if (pet.hunger == 0)
         pet.happiness -= 10 * deltaTime;
 
+    Vector2 mousePosition = GetMousePosition();
+    float distance = Vector2Distance(mousePosition, pet.position);
+    if (pet.state == SLEEPING && (pet.energy < 50) && (distance < 25) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        pet.happiness += 5;
+        pet.state = PLAYING;
+        pet.jumpOffset = 15.0f;
+    };
+    if (pet.state == SLEEPING && pet.energy < 50)
+    {
+        return;
+    }
+
+    if (pet.jumpOffset > 0)
+    {
+        pet.jumpOffset -= 80.0f * deltaTime;
+        if (pet.jumpOffset < 0)
+            pet.jumpOffset = 0;
+    }
+
     pet.hunger = Clamp(pet.hunger, 0.0f, 100.0f);
     pet.happiness = Clamp(pet.happiness, 0.0f, 100.0f);
     pet.energy = Clamp(pet.energy, 0.0f, 100.0f);
@@ -197,14 +217,14 @@ void DrawPet(const Pet &pet)
         break;
     case PLAYING:
         DrawCircle(pet.position.x, y, 20, pet.color);
-        DrawText("♪", pet.position.x - 8, y - 35, 20, GREEN);
+        DrawText("!", pet.position.x - 8, y - 35, 20, ORANGE);
         break;
     case POUNCING:
         DrawCircle(pet.position.x, y, 20, pet.color);
-        DrawText("!", pet.position.x - 5, y - 35, 20, BLACK);
+        DrawText("!", pet.position.x - 10, y - 35, 20, BLACK);
     case PUSHING:
         DrawCircle(pet.position.x, y, 20, pet.color);
-        DrawText("!!", pet.position.x - 5, y - 35, 20, BLACK);
+        DrawText("", pet.position.x - 10, y - 35, 20, BLACK);
     }
 
     // Draw eyes

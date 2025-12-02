@@ -1,5 +1,6 @@
 #pragma once
 #include <raylib.h>
+#include <string>
 
 struct Ball; // Forward declaration
 
@@ -15,6 +16,7 @@ enum PetState
 
 struct Pet
 {
+    char name[32];
     Vector2 position;
     Vector2 velocity;
     PetState state;
