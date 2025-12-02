@@ -100,6 +100,8 @@ int main()
             }
         }
 
+        DrawText("Chamomilly 2025", 265, 185, 8, Color{229, 139, 104, 255});
+
         Vector2 mouse = GetMousePosition();
         bool overInteractive = false;
         for (int i = 0; i < 4; i++)
