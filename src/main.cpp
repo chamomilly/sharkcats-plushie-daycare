@@ -19,7 +19,7 @@ int main()
 
     PetChoice choices[4] = {
         {"Shark Cat",
-         LoadTexture("resources/shark_cat.png")},
+         LoadTexture("resources/sharkcat/sharkcat.png")},
         {"Andrew",
          LoadTexture("resources/andrew.png")},
         {"Toby", LoadTexture("resources/toby.png")},
@@ -67,7 +67,7 @@ int main()
         {
             for (int y = 0; y < 200; y += tileSize)
             {
-                Color color = ((x / tileSize + y / tileSize) % 2 == 0) ? Color{255, 240, 230, 255} : Color{240, 220, 200, 255};
+                Color color = ((x / tileSize + y / tileSize) % 2 == 0) ? Color{255, 250, 245, 255} : Color{245, 235, 225, 255};
                 DrawRectangle(x, y, tileSize, tileSize, color);
             }
         }
@@ -213,7 +213,7 @@ int main()
         {
             for (int y = 0; y < 200; y += tileSize)
             {
-                Color color = ((x / tileSize + y / tileSize) % 2 == 0) ? Color{255, 240, 230, 255} : Color{240, 220, 200, 255};
+                Color color = ((x / tileSize + y / tileSize) % 2 == 0) ? Color{255, 250, 245, 255} : Color{245, 235, 225, 255};
                 DrawRectangle(x, y, tileSize, tileSize, color);
             }
         }
