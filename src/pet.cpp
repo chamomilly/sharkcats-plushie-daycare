@@ -2,14 +2,35 @@
 #include <cstdlib>
 #include <raymath.h>
 #include "items/ball.h"
+#include "animation.h"
 
-void UpdatePet(Pet &pet, float deltaTime, Ball &ball)
+void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation &walk, Animation &sleeping)
 {
     pet.stateTimer += deltaTime;
 
+    if (pet.state == IDLE)
+    {
+        UpdateAnimation(idle);
+    }
+    else if (pet.state == SLEEPING)
+    {
+        UpdateAnimation(sleeping);
+    }
+    else
+    {
+        UpdateAnimation(walk);
+    }
+
     // Needs decay
     pet.hunger -= 0.2 * deltaTime;
-    pet.energy -= 0.1 * deltaTime;
+    if (pet.state == SLEEPING)
+    {
+        pet.energy += 0.5 * deltaTime;
+    }
+    else
+    {
+        pet.energy -= 0.1 * deltaTime;
+    }
 
     if (pet.hunger < 30)
         pet.happiness -= 4.0f * deltaTime; // sadness from hunger
@@ -27,6 +48,8 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball)
         pet.happiness += 5;
         pet.state = PLAYING;
         pet.jumpOffset = 15.0f;
+        walk.currentFrame = 0;
+        walk.timer = 0;
     };
     if (pet.state == SLEEPING && pet.energy < 50)
     {
@@ -57,8 +80,20 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball)
             return;
         }
 
+        PetState oldState = pet.state;
         pet.state = (PetState)(rand() % 4);
         pet.stateTimer = 0.0f;
+
+        // Reset animations when state changes
+        if (oldState != pet.state)
+        {
+            idle.currentFrame = 0;
+            idle.timer = 0;
+            walk.currentFrame = 0;
+            walk.timer = 0;
+            sleeping.currentFrame = 0;
+            sleeping.timer = 0;
+        }
 
         if (pet.state == WALKING)
         {
@@ -89,6 +124,8 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball)
     {
         pet.happiness += 5;
         pet.state = PLAYING;
+        walk.currentFrame = 0;
+        walk.timer = 0;
     };
 
     if (pet.state == SLEEPING)
@@ -124,9 +161,15 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball)
             if (distance > 20)
             {
                 if (ball.position.x > pet.position.x)
+                {
                     pet.position.x += 50 * deltaTime;
+                    pet.velocity.x = 50;
+                }
                 else if (ball.position.x < pet.position.x)
+                {
                     pet.position.x -= 50 * deltaTime;
+                    pet.velocity.x = -50;
+                }
             }
             else
             {
@@ -196,41 +239,37 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball)
     }
 }
 
-void DrawPet(const Pet &pet)
+void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const Animation &sleeping)
 {
-    float y = pet.position.y - pet.jumpOffset;
-
-    // Draw pet based on state
-    switch (pet.state)
+    Vector2 position = {pet.position.x - 16, pet.position.y - pet.jumpOffset - 16};
+    const Animation *anim;
+    if (pet.state == IDLE)
     {
-    case IDLE:
-        DrawCircle(pet.position.x, y, 20, pet.color);
-        DrawText("...", pet.position.x - 10, y - 40, 16, GRAY);
-        break;
-    case WALKING:
-        DrawCircle(pet.position.x, y, 20, pet.color);
-        DrawText("!", pet.position.x - 5, y - 35, 20, BLACK);
-        break;
-    case SLEEPING:
-        DrawEllipse(pet.position.x, y, 25, 15, pet.color);
-        DrawText("zzz", pet.position.x - 15, y - 30, 12, DARKGRAY);
-        break;
-    case PLAYING:
-        DrawCircle(pet.position.x, y, 20, pet.color);
-        DrawText("!", pet.position.x - 8, y - 35, 20, ORANGE);
-        break;
-    case POUNCING:
-        DrawCircle(pet.position.x, y, 20, pet.color);
-        DrawText("!", pet.position.x - 10, y - 35, 20, BLACK);
-    case PUSHING:
-        DrawCircle(pet.position.x, y, 20, pet.color);
-        DrawText("", pet.position.x - 10, y - 35, 20, BLACK);
+        anim = &idle;
+    }
+    else if (pet.state == WALKING)
+    {
+        anim = &walk;
+    }
+    else if (pet.state == SLEEPING)
+    {
+        anim = &sleeping;
+    }
+    else
+    {
+        anim = &walk;
+    }
+    int frameIndex = anim->startFrame + anim->currentFrame;
+    int frameX = (frameIndex % 8) * 32;
+    int frameY = (frameIndex / 8) * 32;
+
+    Rectangle src = {(float)frameX, (float)frameY, 32, 32};
+    Rectangle dest = {pet.position.x, pet.position.y - pet.jumpOffset, 128, 128};
+
+    if (pet.velocity.x < 0)
+    {
+        src.width = -32;
     }
 
-    // Draw eyes
-    if (pet.state != SLEEPING)
-    {
-        DrawCircle(pet.position.x - 8, y - 5, 3, BLACK);
-        DrawCircle(pet.position.x + 8, y - 5, 3, BLACK);
-    }
+    DrawTexturePro(pet.sprite, src, dest, {64, 64}, 0, WHITE);
 }

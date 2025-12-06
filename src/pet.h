@@ -2,7 +2,8 @@
 #include <raylib.h>
 #include <string>
 
-struct Ball; // Forward declaration
+struct Ball;      // Forward declaration
+struct Animation; // Forward declaration
 
 enum PetState
 {
@@ -28,7 +29,8 @@ struct Pet
     float jumpOffset;
     bool hasPounced;
     Vector2 pounceTarget;
+    Texture2D sprite;
 };
 
-void UpdatePet(Pet &pet, float deltaTime, Ball &ball);
-void DrawPet(const Pet &pet);
+void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation &walk, Animation &sleeping);
+void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const Animation &sleeping);

@@ -9,6 +9,7 @@
 #include "items/ball.h"
 #include <cstring>
 #include "pet_choices.h"
+#include "animation.h"
 
 int main()
 {
@@ -16,6 +17,7 @@ int main()
     GuiLoadStyle("resources/candy.rgs");
     SetTargetFPS(60);
     srand(time(nullptr));
+    Texture2D sprite = LoadTexture("resources/andrew_sprite.png");
 
     PetChoice choices[4] = {
         {"Shark Cat",
@@ -27,7 +29,7 @@ int main()
 
     Pet pet = {
         {},                       // name (will be set below)
-        {200, 175},               // position
+        {200, 125},               // position
         {0, 0},                   // velocity
         IDLE,                     // state
         0.0f,                     // state timer
@@ -37,7 +39,8 @@ int main()
         100.0f,                   // energy
         0.0f,                     // jump offset
         false,                    // has pounced (so it only pounces once)
-        {-100, -100}              // pounce target
+        {-100, -100},             // pounce target
+        sprite                    // sprite texture
     };
 
     Ball ball{
@@ -57,6 +60,40 @@ int main()
         false,                            // isFalling
         LoadTexture("resources/fish.png") // texture
     };
+
+    Animation walk{
+        8 * 2,
+        5,
+        0,
+        120, 0};
+
+    Animation idle{
+        0,
+        6,
+        0,
+        120,
+        0};
+
+    Animation idle2{
+        8,
+        6,
+        0,
+        120,
+        0};
+
+    Animation jump{
+        8 * 3,
+        8,
+        0,
+        120,
+        0};
+
+    Animation sleep{
+        8 * 6,
+        8,
+        0,
+        120,
+        0};
 
     int selectedPetIndex = -1;
     while (selectedPetIndex == -1 && !WindowShouldClose())
@@ -121,7 +158,7 @@ int main()
     {
         float deltaTime = GetFrameTime();
 
-        UpdatePet(pet, deltaTime, ball);
+        UpdatePet(pet, deltaTime, ball, idle, walk, sleep);
 
         if (fish.isFalling)
         {
@@ -218,7 +255,7 @@ int main()
             }
         }
 
-        DrawPet(pet);
+        DrawPet(pet, idle, walk, sleep);
 
         if (fish.isFalling)
         {
