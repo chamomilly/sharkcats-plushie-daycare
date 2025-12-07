@@ -47,7 +47,3 @@ A simple pet care simulation game built with raylib and raygui. Watch your adora
 - `src/pet.cpp/h` - Pet behavior and rendering
 - `src/fish.h` - Fish structure
 - `resources/` - Game assets (textures, sounds)
-
-## License
-
-MIT License - Feel free to modify and distribute!
