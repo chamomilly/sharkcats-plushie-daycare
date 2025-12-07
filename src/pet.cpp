@@ -4,7 +4,7 @@
 #include "items/ball.h"
 #include "animation.h"
 
-void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation &walk, Animation &sleeping)
+void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation &walk, Animation &sleeping, Animation &pouncing)
 {
     pet.stateTimer += deltaTime;
 
@@ -15,6 +15,10 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
     else if (pet.state == SLEEPING)
     {
         UpdateAnimation(sleeping);
+    }
+    else if (pet.state == POUNCING)
+    {
+        UpdateAnimation(pouncing);
     }
     else
     {
@@ -43,7 +47,7 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
 
     Vector2 mousePosition = GetMousePosition();
     float distance = Vector2Distance(mousePosition, pet.position);
-    if (pet.state == SLEEPING && (pet.energy < 50) && (distance < 25) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    if (pet.state == SLEEPING && (pet.energy < 50) && (distance < 80) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         pet.happiness += 5;
         pet.state = PLAYING;
@@ -119,8 +123,9 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
     }
 
     Vector2 mouse = GetMousePosition();
-    float d = Vector2Distance(mouse, pet.position);
-    if (d < 25 && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    Vector2 petCenter2 = {pet.position.x, pet.position.y};
+    float d = Vector2Distance(mouse, petCenter2);
+    if (d < 80 && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         pet.happiness += 5;
         pet.state = PLAYING;
@@ -164,11 +169,13 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
                 {
                     pet.position.x += 50 * deltaTime;
                     pet.velocity.x = 50;
+                    pet.facingLeft = false;
                 }
                 else if (ball.position.x < pet.position.x)
                 {
                     pet.position.x -= 50 * deltaTime;
                     pet.velocity.x = -50;
+                    pet.facingLeft = true;
                 }
             }
             else
@@ -200,11 +207,13 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
         float jumpHeight = 10.0f * 4 * time * (1 - time); // jump arc parabola
         pet.jumpOffset = jumpHeight;
 
-        if (pet.stateTimer > duration)
+        if (pouncing.currentFrame >= pouncing.frameCount - 1)
         {
             pet.state = PUSHING;
             pet.stateTimer = 0.0f;
             pet.jumpOffset = 0;
+            pouncing.currentFrame = 0;
+            pouncing.timer = 0;
         }
     }
 
@@ -239,7 +248,7 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
     }
 }
 
-void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const Animation &sleeping)
+void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const Animation &sleeping, const Animation &pouncing)
 {
     Vector2 position = {pet.position.x - 16, pet.position.y - pet.jumpOffset - 16};
     const Animation *anim;
@@ -247,7 +256,7 @@ void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const
     {
         anim = &idle;
     }
-    else if (pet.state == WALKING)
+    else if (pet.state == WALKING || pet.state == PLAYING)
     {
         anim = &walk;
     }
@@ -255,9 +264,17 @@ void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const
     {
         anim = &sleeping;
     }
+    else if (pet.state == POUNCING)
+    {
+        anim = &pouncing;
+    }
+    else if (pet.state == PUSHING)
+    {
+        anim = &idle;
+    }
     else
     {
-        anim = &walk;
+        anim = &idle;
     }
     int frameIndex = anim->startFrame + anim->currentFrame;
     int frameX = (frameIndex % 8) * 32;
@@ -266,7 +283,7 @@ void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const
     Rectangle src = {(float)frameX, (float)frameY, 32, 32};
     Rectangle dest = {pet.position.x, pet.position.y - pet.jumpOffset, 128, 128};
 
-    if (pet.velocity.x < 0)
+    if (pet.facingLeft)
     {
         src.width = -32;
     }

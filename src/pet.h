@@ -30,7 +30,8 @@ struct Pet
     bool hasPounced;
     Vector2 pounceTarget;
     Texture2D sprite;
+    bool facingLeft;
 };
 
-void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation &walk, Animation &sleeping);
-void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const Animation &sleeping);
+void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation &walk, Animation &sleeping, Animation &pouncing);
+void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const Animation &sleeping, const Animation &pouncing);

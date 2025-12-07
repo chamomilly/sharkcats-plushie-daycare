@@ -158,7 +158,7 @@ int main()
     {
         float deltaTime = GetFrameTime();
 
-        UpdatePet(pet, deltaTime, ball, idle, walk, sleep);
+        UpdatePet(pet, deltaTime, ball, idle, walk, sleep, jump);
 
         if (fish.isFalling)
         {
@@ -233,7 +233,8 @@ int main()
         }
 
         // Check if over pet
-        if (Vector2Distance(mouse, pet.position) < 25)
+        Vector2 petCenter = {pet.position.x, pet.position.y};
+        if (Vector2Distance(mouse, petCenter) < 80)
         {
             overInteractive = true;
         }
@@ -255,7 +256,7 @@ int main()
             }
         }
 
-        DrawPet(pet, idle, walk, sleep);
+        DrawPet(pet, idle, walk, sleep, jump);
 
         if (fish.isFalling)
         {
