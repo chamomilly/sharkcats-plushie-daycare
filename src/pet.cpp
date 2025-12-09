@@ -4,7 +4,7 @@
 #include "items/ball.h"
 #include "animation.h"
 
-void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation &walk, Animation &sleeping, Animation &pouncing)
+void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation &walk, Animation &sleeping, Animation &jump)
 {
     pet.stateTimer += deltaTime;
 
@@ -18,7 +18,7 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
     }
     else if (pet.state == POUNCING)
     {
-        UpdateAnimation(pouncing);
+        UpdateAnimation(jump);
     }
     else
     {
@@ -207,13 +207,13 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
         float jumpHeight = 10.0f * 4 * time * (1 - time); // jump arc parabola
         pet.jumpOffset = jumpHeight;
 
-        if (pouncing.currentFrame >= pouncing.frameCount - 1)
+        if (jump.currentFrame >= jump.frameCount - 1)
         {
             pet.state = PUSHING;
             pet.stateTimer = 0.0f;
             pet.jumpOffset = 0;
-            pouncing.currentFrame = 0;
-            pouncing.timer = 0;
+            jump.currentFrame = 0;
+            jump.timer = 0;
         }
     }
 
@@ -248,7 +248,7 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
     }
 }
 
-void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const Animation &sleeping, const Animation &pouncing)
+void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const Animation &sleeping, const Animation &jump)
 {
     Vector2 position = {pet.position.x - 16, pet.position.y - pet.jumpOffset - 16};
     const Animation *anim;
@@ -266,7 +266,7 @@ void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const
     }
     else if (pet.state == POUNCING)
     {
-        anim = &pouncing;
+        anim = &jump;
     }
     else if (pet.state == PUSHING)
     {

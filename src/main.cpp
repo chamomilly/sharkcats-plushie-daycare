@@ -18,14 +18,18 @@ int main()
     SetTargetFPS(60);
     srand(time(nullptr));
     Texture2D sprite = LoadTexture("resources/andrew_sprite.png");
-
-    PetChoice choices[4] = {
-        {"Shark Cat",
-         LoadTexture("resources/sharkcat/sharkcat.png")},
+    
+    // Create render textures for pet selection icons
+    RenderTexture2D andrewIcon = LoadRenderTexture(32, 32);
+    BeginTextureMode(andrewIcon);
+    DrawTextureRec(sprite, {0, 0, 32, 32}, {0, 0}, WHITE);
+    EndTextureMode();
+    
+    PetChoice choices[2] = {
         {"Andrew",
-         LoadTexture("resources/andrew.png")},
-        {"Toby", LoadTexture("resources/toby.png")},
-        {"Bruce", LoadTexture("resources/bruce.png")}};
+         andrewIcon.texture},
+        {"Chilli",
+         LoadTexture("resources/sharkcat/sharkcat.png")}};
 
     Pet pet = {
         {},                       // name (will be set below)
@@ -40,7 +44,8 @@ int main()
         0.0f,                     // jump offset
         false,                    // has pounced (so it only pounces once)
         {-100, -100},             // pounce target
-        sprite                    // sprite texture
+        sprite,                   // sprite texture
+        false                     // facingLeft
     };
 
     Ball ball{
@@ -96,62 +101,104 @@ int main()
         0};
 
     int selectedPetIndex = -1;
+    bool showReferences = false;
+
     while (selectedPetIndex == -1 && !WindowShouldClose())
     {
-        BeginDrawing();
-        int tileSize = 16;
-        for (int x = 0; x < 350; x += tileSize)
+        while (!showReferences && selectedPetIndex == -1 && !WindowShouldClose())
         {
-            for (int y = 0; y < 200; y += tileSize)
+            BeginDrawing();
+            int tileSize = 16;
+            for (int x = 0; x < 350; x += tileSize)
             {
-                Color color = ((x / tileSize + y / tileSize) % 2 == 0) ? Color{255, 250, 245, 255} : Color{245, 235, 225, 255};
-                DrawRectangle(x, y, tileSize, tileSize, color);
+                for (int y = 0; y < 200; y += tileSize)
+                {
+                    Color color = ((x / tileSize + y / tileSize) % 2 == 0) ? Color{255, 250, 245, 255} : Color{245, 235, 225, 255};
+                    DrawRectangle(x, y, tileSize, tileSize, color);
+                }
             }
-        }
 
-        DrawText("Welcome to Plushie Daycare!", 35, 20, 16, Color{252, 105, 85, 255});
-        DrawText("Choose your plushie:", 35, 38, 12, Color{252, 105, 85, 255});
+            DrawText("Welcome to Plushie Daycare!", 35, 20, 16, Color{252, 105, 85, 255});
+            DrawText("Choose your plushie:", 35, 38, 12, Color{252, 105, 85, 255});
 
-        Rectangle buttons[4]; // to know if hovered over
+            Rectangle buttons[2]; // to know if hovered over
 
-        for (int i = 0; i < 4; i++)
-        {
-            Rectangle buttonRect = {35 + i * 70, 80, 60, 60};
-            buttons[i] = buttonRect;
+            for (int i = 0; i < 2; i++)
+            {
+                Rectangle buttonRect = {35 + i * 70, 60, 60, 60};
+                buttons[i] = buttonRect;
 
-            DrawRectangleRec(buttonRect, Color{254, 218, 150, 255});
-            DrawRectangleLinesEx(buttonRect, 2, Color{229, 139, 104, 255});
+                DrawRectangleRec(buttonRect, Color{254, 218, 150, 255});
+                DrawRectangleLinesEx(buttonRect, 2, Color{229, 139, 104, 255});
 
-            DrawTexturePro(choices[i].texture,
-                           {0, 0, (float)choices[i].texture.width, (float)choices[i].texture.height},
-                           {buttonRect.x, buttonRect.y, buttonRect.width, buttonRect.height},
-                           {0, 0}, 0, WHITE);
+                DrawTexturePro(choices[i].texture,
+                               {0, 0, (float)choices[i].texture.width, (float)choices[i].texture.height},
+                               {buttonRect.x, buttonRect.y, buttonRect.width, buttonRect.height},
+                               {0, 0}, 0, WHITE);
 
-            DrawText(choices[i].name, buttonRect.x, buttonRect.y + buttonRect.height + 5, 10, Color{252, 105, 85, 255});
+                DrawText(choices[i].name, buttonRect.x, buttonRect.y + buttonRect.height + 5, 10, Color{252, 105, 85, 255});
+
+                Vector2 mouse = GetMousePosition();
+                if (CheckCollisionPointRec(mouse, buttonRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+                {
+                    selectedPetIndex = i;
+                    strcpy(pet.name, choices[i].name);
+                }
+            }
 
             Vector2 mouse = GetMousePosition();
-            if (CheckCollisionPointRec(mouse, buttonRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            bool overInteractive = false;
+            for (int i = 0; i < 2; i++)
             {
-                selectedPetIndex = i;
-                strcpy(pet.name, choices[i].name);
+                if (CheckCollisionPointRec(mouse, buttons[i]))
+                {
+                    overInteractive = true;
+                    break;
+                }
             }
-        }
 
-        DrawText("Chamomilly 2025", 265, 185, 8, Color{229, 139, 104, 255});
-
-        Vector2 mouse = GetMousePosition();
-        bool overInteractive = false;
-        for (int i = 0; i < 4; i++)
-        {
-            if (CheckCollisionPointRec(mouse, buttons[i]))
+            DrawText("Chamomilly 2025", 265, 185, 8, Color{229, 139, 104, 255});
+            if (GuiButton({20, 175, 100, 20}, "References"))
+            {
+                showReferences = true;
+            }
+            if (CheckCollisionPointRec(mouse, {20, 175, 100, 8}))
             {
                 overInteractive = true;
-                break;
             }
-        }
-        SetMouseCursor(overInteractive ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
 
-        EndDrawing();
+            SetMouseCursor(overInteractive ? MOUSE_CURSOR_POINTING_HAND : MOUSE_CURSOR_DEFAULT);
+
+            EndDrawing();
+        }
+
+        while (showReferences && !WindowShouldClose())
+        {
+            BeginDrawing();
+            int tileSize = 16;
+            for (int x = 0; x < 350; x += tileSize)
+            {
+                for (int y = 0; y < 200; y += tileSize)
+                {
+                    Color color = ((x / tileSize + y / tileSize) % 2 == 0) ? Color{255, 250, 245, 255} : Color{245, 235, 225, 255};
+                    DrawRectangle(x, y, tileSize, tileSize, color);
+                }
+            }
+
+            DrawText("Plushie Daycare References", 15, 20, 16, Color{252, 105, 85, 255});
+            DrawText("Cat Sprites by Elthen's Pixel Art Shop", 15, 38, 12, Color{252, 105, 85, 255});
+            DrawText("https://elthen.itch.io/2d-pixel-art-cat-sprites", 15, 52, 8, Color{252, 105, 85, 255});
+            DrawText("Red Panda Sprites by Elthen's Pixel Art Shop", 15, 67, 12, Color{252, 105, 85, 255});
+            DrawText("https://elthen.itch.io/2d-pixel-art-red-panda-sprites", 15, 80, 8, Color{252, 105, 85, 255});
+
+            if (GuiButton({15, 100, 60, 20}, "Back"))
+            {
+                showReferences = false;
+                selectedPetIndex = -1;
+            }
+
+            EndDrawing();
+        }
     }
 
     while (!WindowShouldClose())
@@ -263,9 +310,7 @@ int main()
             DrawTextureEx(fish.texture, fish.position, 0.0f, 0.2f, WHITE);
         };
 
-        DrawRectangle(10, 5, 100, 21, Color{255, 255, 255, 200});
-        DrawRectangleLines(10, 5, 100, 21, Color{180, 180, 180, 255});
-        DrawText(pet.name, 15, 10, 12, Color{229, 139, 104, 255});
+        DrawText(pet.name, 15, 10, 14, Color{252, 105, 85, 255});
         // maybe put icons here??
 
         if (GuiButton({10, 30, 60, 20}, "Feed"))
@@ -321,6 +366,7 @@ int main()
         EndDrawing();
     }
 
+    UnloadRenderTexture(andrewIcon);
     CloseWindow();
     return 0;
 }
