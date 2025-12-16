@@ -1,3 +1,6 @@
+#pragma once
+#include <raylib.h>
+
 struct Animation
 {
     int startFrame; // first frame index in the sheet

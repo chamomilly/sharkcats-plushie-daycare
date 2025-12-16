@@ -1,9 +1,9 @@
 #pragma once
 #include <raylib.h>
 #include <string>
+#include "animation.h"
 
 struct Ball;      // Forward declaration
-struct Animation; // Forward declaration
 
 enum PetState
 {
@@ -31,7 +31,11 @@ struct Pet
     Vector2 pounceTarget;
     Texture2D sprite;
     bool facingLeft;
+    Animation idle;
+    Animation walk;
+    Animation sleep;
+    Animation pouncing;
 };
 
-void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation &walk, Animation &sleeping, Animation &jump);
-void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const Animation &sleeping, const Animation &jump);
+void UpdatePet(Pet &pet, float deltaTime, Ball &Ball);
+void DrawPet(const Pet &pet);

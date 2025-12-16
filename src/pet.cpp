@@ -4,25 +4,25 @@
 #include "items/ball.h"
 #include "animation.h"
 
-void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation &walk, Animation &sleeping, Animation &jump)
+void UpdatePet(Pet &pet, float deltaTime, Ball &ball)
 {
     pet.stateTimer += deltaTime;
 
     if (pet.state == IDLE)
     {
-        UpdateAnimation(idle);
+        UpdateAnimation(pet.idle);
     }
     else if (pet.state == SLEEPING)
     {
-        UpdateAnimation(sleeping);
+        UpdateAnimation(pet.sleep);
     }
     else if (pet.state == POUNCING)
     {
-        UpdateAnimation(jump);
+        UpdateAnimation(pet.pouncing);
     }
     else
     {
-        UpdateAnimation(walk);
+        UpdateAnimation(pet.walk);
     }
 
     // Needs decay
@@ -52,8 +52,8 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
         pet.happiness += 5;
         pet.state = PLAYING;
         pet.jumpOffset = 15.0f;
-        walk.currentFrame = 0;
-        walk.timer = 0;
+        pet.walk.currentFrame = 0;
+        pet.walk.timer = 0;
     };
     if (pet.state == SLEEPING && pet.energy < 50)
     {
@@ -91,12 +91,12 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
         // Reset animations when state changes
         if (oldState != pet.state)
         {
-            idle.currentFrame = 0;
-            idle.timer = 0;
-            walk.currentFrame = 0;
-            walk.timer = 0;
-            sleeping.currentFrame = 0;
-            sleeping.timer = 0;
+            pet.idle.currentFrame = 0;
+            pet.idle.timer = 0;
+            pet.walk.currentFrame = 0;
+            pet.walk.timer = 0;
+            pet.sleep.currentFrame = 0;
+            pet.sleep.timer = 0;
         }
 
         if (pet.state == WALKING)
@@ -129,8 +129,8 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
     {
         pet.happiness += 5;
         pet.state = PLAYING;
-        walk.currentFrame = 0;
-        walk.timer = 0;
+        pet.walk.currentFrame = 0;
+        pet.walk.timer = 0;
     };
 
     if (pet.state == SLEEPING)
@@ -207,13 +207,13 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
         float jumpHeight = 10.0f * 4 * time * (1 - time); // jump arc parabola
         pet.jumpOffset = jumpHeight;
 
-        if (jump.currentFrame >= jump.frameCount - 1)
+        if (pet.pouncing.currentFrame >= pet.pouncing.frameCount - 1)
         {
             pet.state = PUSHING;
             pet.stateTimer = 0.0f;
             pet.jumpOffset = 0;
-            jump.currentFrame = 0;
-            jump.timer = 0;
+            pet.pouncing.currentFrame = 0;
+            pet.pouncing.timer = 0;
         }
     }
 
@@ -248,33 +248,33 @@ void UpdatePet(Pet &pet, float deltaTime, Ball &ball, Animation &idle, Animation
     }
 }
 
-void DrawPet(const Pet &pet, const Animation &idle, const Animation &walk, const Animation &sleeping, const Animation &jump)
+void DrawPet(const Pet &pet)
 {
     Vector2 position = {pet.position.x - 16, pet.position.y - pet.jumpOffset - 16};
     const Animation *anim;
     if (pet.state == IDLE)
     {
-        anim = &idle;
+        anim = &pet.idle;
     }
     else if (pet.state == WALKING || pet.state == PLAYING)
     {
-        anim = &walk;
+        anim = &pet.walk;
     }
     else if (pet.state == SLEEPING)
     {
-        anim = &sleeping;
+        anim = &pet.sleep;
     }
     else if (pet.state == POUNCING)
     {
-        anim = &jump;
+        anim = &pet.pouncing;
     }
     else if (pet.state == PUSHING)
     {
-        anim = &idle;
+        anim = &pet.idle;
     }
     else
     {
-        anim = &idle;
+        anim = &pet.idle;
     }
     int frameIndex = anim->startFrame + anim->currentFrame;
     int frameX = (frameIndex % 8) * 32;

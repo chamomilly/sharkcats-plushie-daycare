@@ -10,6 +10,7 @@
 #include <cstring>
 #include "pet_choices.h"
 #include "animation.h"
+#include "animations.h"
 
 int main()
 {
@@ -17,19 +18,26 @@ int main()
     GuiLoadStyle("resources/candy.rgs");
     SetTargetFPS(60);
     srand(time(nullptr));
-    Texture2D sprite = LoadTexture("resources/andrew_sprite.png");
-    
-    // Create render textures for pet selection icons
+    Texture2D andrewSprite = LoadTexture("resources/andrew_sprite.png");
+    Texture2D chilliSprite = LoadTexture("resources/chilli_sprite.png");
+
     RenderTexture2D andrewIcon = LoadRenderTexture(32, 32);
     BeginTextureMode(andrewIcon);
-    DrawTextureRec(sprite, {0, 0, 32, 32}, {0, 0}, WHITE);
+    ClearBackground(BLANK);
+    DrawTexturePro(andrewSprite, {0, 0, 32, 32}, {0, 0, 32, 32}, {0, 0}, 0, WHITE);
     EndTextureMode();
-    
+
+    RenderTexture2D chilliIcon = LoadRenderTexture(32, 32);
+    BeginTextureMode(chilliIcon);
+    ClearBackground(BLANK);
+    DrawTexturePro(chilliSprite, {0, 0, 32, 32}, {0, 0, 32, 32}, {0, 0}, 0, WHITE);
+    EndTextureMode();
+
     PetChoice choices[2] = {
         {"Andrew",
          andrewIcon.texture},
         {"Chilli",
-         LoadTexture("resources/sharkcat/sharkcat.png")}};
+         chilliIcon.texture}};
 
     Pet pet = {
         {},                       // name (will be set below)
@@ -44,9 +52,15 @@ int main()
         0.0f,                     // jump offset
         false,                    // has pounced (so it only pounces once)
         {-100, -100},             // pounce target
-        sprite,                   // sprite texture
+        andrewSprite,             // sprite texture
         false                     // facingLeft
     };
+
+    // Initialize animations with default values
+    pet.idle = {0, 6, 0, 120, 0};
+    pet.walk = {8 * 2, 5, 0, 120, 0};
+    pet.sleep = {8 * 6, 8, 0, 120, 0};
+    pet.pouncing = {8 * 3, 8, 0, 120, 0};
 
     Ball ball{
         {-100, -100},                      // position
@@ -65,40 +79,6 @@ int main()
         false,                            // isFalling
         LoadTexture("resources/fish.png") // texture
     };
-
-    Animation walk{
-        8 * 2,
-        5,
-        0,
-        120, 0};
-
-    Animation idle{
-        0,
-        6,
-        0,
-        120,
-        0};
-
-    Animation idle2{
-        8,
-        6,
-        0,
-        120,
-        0};
-
-    Animation jump{
-        8 * 3,
-        8,
-        0,
-        120,
-        0};
-
-    Animation sleep{
-        8 * 6,
-        8,
-        0,
-        120,
-        0};
 
     int selectedPetIndex = -1;
     bool showReferences = false;
@@ -131,10 +111,14 @@ int main()
                 DrawRectangleRec(buttonRect, Color{254, 218, 150, 255});
                 DrawRectangleLinesEx(buttonRect, 2, Color{229, 139, 104, 255});
 
+                float iconSize = 56;
+                float iconX = buttonRect.x + buttonRect.width / 2;
+                float iconY = buttonRect.y + buttonRect.height / 2;
+
                 DrawTexturePro(choices[i].texture,
-                               {0, 0, (float)choices[i].texture.width, (float)choices[i].texture.height},
-                               {buttonRect.x, buttonRect.y, buttonRect.width, buttonRect.height},
-                               {0, 0}, 0, WHITE);
+                               {0, 0, (float)choices[i].texture.width, -(float)choices[i].texture.height},
+                               {iconX, iconY, iconSize, iconSize},
+                               {iconSize / 2, iconSize / 2}, 0, WHITE);
 
                 DrawText(choices[i].name, buttonRect.x, buttonRect.y + buttonRect.height + 5, 10, Color{252, 105, 85, 255});
 
@@ -143,6 +127,21 @@ int main()
                 {
                     selectedPetIndex = i;
                     strcpy(pet.name, choices[i].name);
+                    if (strcmp(choices[i].name, "Andrew") == 0)
+                    {
+                        pet.idle = {0, 6, 0, 120, 0};
+                        pet.walk = {8 * 2, 5, 0, 120, 0};
+                        pet.pouncing = {8 * 3, 8, 0, 120, 0};
+                        pet.sleep = {8 * 6, 8, 0, 120, 0};
+                    }
+                    else
+                    {
+                        pet.idle = {0, 4, 0, 120, 0};
+                        pet.walk = {8 * 4, 8, 0, 120, 0};
+                        pet.pouncing = {8 * 8, 7, 0, 120, 0};
+                        pet.sleep = {8 * 6, 4, 0, 120, 0};
+                        pet.sprite = chilliSprite;
+                    }
                 }
             }
 
@@ -205,7 +204,7 @@ int main()
     {
         float deltaTime = GetFrameTime();
 
-        UpdatePet(pet, deltaTime, ball, idle, walk, sleep, jump);
+        UpdatePet(pet, deltaTime, ball);
 
         if (fish.isFalling)
         {
@@ -303,7 +302,7 @@ int main()
             }
         }
 
-        DrawPet(pet, idle, walk, sleep, jump);
+        DrawPet(pet);
 
         if (fish.isFalling)
         {
