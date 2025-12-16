@@ -11,10 +11,12 @@
 #include "pet_choices.h"
 #include "animation.h"
 #include "animations.h"
+#include "save_data.h"
 
 int main()
 {
     InitWindow(350, 200, "Plushie Daycare");
+    SetExitKey(0); // Disable ESC key from closing window
     GuiLoadStyle("resources/candy.rgs");
     SetTargetFPS(60);
     srand(time(nullptr));
@@ -82,8 +84,87 @@ int main()
 
     int selectedPetIndex = -1;
     bool showReferences = false;
+    bool showQuitScreen = false;
+    bool showResumeScreen = false;
+    bool shouldQuit = false;
 
-    while (selectedPetIndex == -1 && !WindowShouldClose())
+    SaveData saveData;
+    if (LoadGame(saveData))
+    {
+        selectedPetIndex = saveData.selection;
+        strcpy(pet.name, selectedPetIndex == 0 ? "Andrew" : "Chilli");
+        pet.hunger = saveData.hunger;
+        pet.happiness = saveData.happiness;
+        pet.energy = saveData.energy;
+        pet.sprite = selectedPetIndex == 0 ? andrewSprite : chilliSprite;
+
+        if (strcmp(pet.name, "Andrew") == 0)
+        {
+            pet.idle = {0, 6, 0, 120, 0};
+            pet.walk = {8 * 2, 5, 0, 120, 0};
+            pet.pouncing = {8 * 3, 8, 0, 120, 0};
+            pet.sleep = {8 * 6, 8, 0, 120, 0};
+        }
+        else
+        {
+            pet.idle = {0, 4, 0, 120, 0};
+            pet.walk = {8 * 4, 8, 0, 120, 0};
+            pet.pouncing = {8 * 8, 7, 0, 120, 0};
+            pet.sleep = {8 * 6, 4, 0, 120, 0};
+            pet.sprite = chilliSprite;
+        }
+        showResumeScreen = true;
+    }
+
+    while (showResumeScreen && !WindowShouldClose())
+    {
+        BeginDrawing();
+        ClearBackground(Color{255, 250, 245, 255});
+
+        DrawText("Welcome back!", 35, 20, 16, Color{252, 105, 85, 255});
+        DrawText("Your plushie is still hungry!", 35, 38, 12, Color{252, 105, 85, 255});
+
+        if (GuiButton({200, 60, 80, 20}, "Resume"))
+        {
+            showResumeScreen = false;
+        }
+        if (GuiButton({200, 90, 80, 20}, "New Game"))
+        {
+            selectedPetIndex = -1;
+            strcpy(pet.name, "");
+            pet.hunger = 100.0f;
+            pet.happiness = 100.0f;
+            pet.energy = 100.0f;
+            showResumeScreen = false;
+        }
+        if (GuiButton({200, 120, 80, 20}, "Quit Game"))
+        {
+            shouldQuit = true;
+            break;
+        }
+
+        if (selectedPetIndex >= 0)
+        {
+            Rectangle buttonRect = {50, 60, 60, 60};
+            DrawRectangleRec(buttonRect, Color{254, 218, 150, 255});
+            DrawRectangleLinesEx(buttonRect, 2, Color{229, 139, 104, 255});
+
+            float iconSize = 56;
+            float iconX = buttonRect.x + buttonRect.width / 2;
+            float iconY = buttonRect.y + buttonRect.height / 2;
+
+            DrawTexturePro(choices[selectedPetIndex].texture,
+                           {0, 0, (float)choices[selectedPetIndex].texture.width, -(float)choices[selectedPetIndex].texture.height},
+                           {iconX, iconY, iconSize, iconSize},
+                           {iconSize / 2, iconSize / 2}, 0, WHITE);
+
+            DrawText(choices[selectedPetIndex].name, buttonRect.x, buttonRect.y + buttonRect.height + 5, 10, Color{252, 105, 85, 255});
+        }
+
+        EndDrawing();
+    }
+
+    while (selectedPetIndex == -1 && !WindowShouldClose() && !shouldQuit)
     {
         while (!showReferences && selectedPetIndex == -1 && !WindowShouldClose())
         {
@@ -101,7 +182,7 @@ int main()
             DrawText("Welcome to Plushie Daycare!", 35, 20, 16, Color{252, 105, 85, 255});
             DrawText("Choose your plushie:", 35, 38, 12, Color{252, 105, 85, 255});
 
-            Rectangle buttons[2]; // to know if hovered over
+            Rectangle buttons[2];
 
             for (int i = 0; i < 2; i++)
             {
@@ -200,8 +281,48 @@ int main()
         }
     }
 
-    while (!WindowShouldClose())
+    while (!WindowShouldClose() && !shouldQuit)
     {
+        if (IsKeyPressed(KEY_ESCAPE))
+        {
+            showQuitScreen = true;
+        }
+
+        if (showQuitScreen)
+        {
+            BeginDrawing();
+            int tileSize = 16;
+            for (int x = 0; x < 350; x += tileSize)
+            {
+                for (int y = 0; y < 200; y += tileSize)
+                {
+                    Color color = ((x / tileSize + y / tileSize) % 2 == 0) ? Color{255, 250, 245, 255} : Color{245, 235, 225, 255};
+                    DrawRectangle(x, y, tileSize, tileSize, color);
+                }
+            }
+
+            DrawText("Are you sure you want to quit?", 50, 60, 16, Color{252, 105, 85, 255});
+            DrawText("Your plushie will be saved.", 90, 90, 12, Color{252, 105, 85, 255});
+
+            if (GuiButton({100, 120, 60, 20}, "Yes"))
+            {
+                SaveData saveData = {
+                    strcmp(pet.name, "Andrew") == 0 ? 0 : 1,
+                    (int)pet.happiness,
+                    (int)pet.hunger,
+                    (int)pet.energy};
+                SaveGame(saveData);
+                break;
+            }
+            if (GuiButton({180, 120, 60, 20}, "No"))
+            {
+                showQuitScreen = false;
+            }
+
+            EndDrawing();
+            continue;
+        }
+
         float deltaTime = GetFrameTime();
 
         UpdatePet(pet, deltaTime, ball);
